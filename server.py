@@ -173,13 +173,8 @@ async def process_data(type, data):
 			for member in data['mentions']:
 				if member['id'] == get_env('CLIENT_ID'):
 					await commands(data['channel_id'], data['content'])
-					#return await send_message(data['channel_id'], "HELLO")
 				else:
 					print('Nobody mentioned me :(')
-		# print(data)
-		# if "herra" in data['content']
-		#return await send_message(data['channel_id'], "HELLO")
-	pass
 
 async def start(url):
 	async with aiohttp.ClientSession() as session:
@@ -210,7 +205,6 @@ async def start(url):
 					lastseq = data
 				elif data["op"] == 0: # OP - Dispath
 					await process_data(data['t'], data['d'])
-					#print(data['t'], data['d'])
 				else:
 					print(data)
 
@@ -224,10 +218,10 @@ async def heartbeat(ws, interval, lastseq):
 		})
 
 async def main():
-	init_env()
 	response = await api_call('/gateway')
 	await start(response['url'])
 
+# Init the env's before we start async funcs
 init_env()
 
 loop = asyncio.get_event_loop()
