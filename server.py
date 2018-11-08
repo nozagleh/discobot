@@ -11,11 +11,6 @@ import aiohttp
 
 from popemessages import MESSAGES_FROM_GOD
 
-TOKEN = ''
-CLIENT_ID = ''
-DISCORD_ENDPOINT = ''
-BOT_NAME = ''
-
 COMMANDS_LIST = {
 	"weather": {
 		"format": "weather <place>",
@@ -39,18 +34,17 @@ COMMANDS_LIST = {
 	}
 }
 
-CONFIG = None
+config = configparser.RawConfigParser()
 
-async def init_env():
-	CONFIG = configparser.RawConfigParser()
-	CONFIG.read('.env')
+def init_env():
+	config.read('.env')
+	print(config.get('BOT', 'TOKEN'))
 
 def get_env(var):
-	return CONFIG.get('BOT', var)
+	return config.get('BOT', var)
 
 async def api_call(endpoint, method="GET", **kwargs):
 	token = get_env('TOKEN')
-	print(token)
 	headers = {
 		"headers": {
 			"Authorization": f"Bot {token}",
@@ -58,7 +52,7 @@ async def api_call(endpoint, method="GET", **kwargs):
 		}
 	}
 	kwargs = dict(headers, **kwargs)
-	path = DISCORD_ENDPOINT + endpoint
+	path = get_env('DISCORD_ENDPOINT') + endpoint
 	async with aiohttp.ClientSession() as session:
 		async with session.request(method, path, **kwargs) as response:
 			assert 200 == response.status, response.reason
@@ -158,10 +152,8 @@ async def commands(channel, command):
 				args.append('help')
 			await weather(channel, args)
 		if cleancommand == "pope":
-			print('POPE')
 			await pope(channel)
 		elif cleancommand == "help":
-			print('HELP')
 			helpstr = ''
 			for cmd, val in COMMANDS_LIST.items():
 				helpstr += f"\n- {cmd}: {val['desc']}\n"
@@ -169,8 +161,6 @@ async def commands(channel, command):
 			await send_message(channel, f"Available commands:\n{helpstr}")
 		else:
 			pass
-			#print('NOTHING!')
-			#await send_message(channel, f"Uhmm... this is awkward, I don't know the command '{cleancommand}'")
 
 	return False
 
@@ -181,7 +171,7 @@ async def process_data(type, data):
 
 		if len(data['mentions']) > 0:
 			for member in data['mentions']:
-				if member['id'] == CLIENT_ID:
+				if member['id'] == get_env('CLIENT_ID'):
 					await commands(data['channel_id'], data['content'])
 					#return await send_message(data['channel_id'], "HELLO")
 				else:
@@ -234,9 +224,11 @@ async def heartbeat(ws, interval, lastseq):
 		})
 
 async def main():
-	await init_env()
+	init_env()
 	response = await api_call('/gateway')
 	await start(response['url'])
+
+init_env()
 
 loop = asyncio.get_event_loop()
 loop.run_until_complete(main())
