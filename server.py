@@ -38,7 +38,6 @@ config = configparser.RawConfigParser()
 
 def init_env():
 	config.read('.env')
-	print(config.get('BOT', 'TOKEN'))
 
 def get_env(var):
 	return config.get('BOT', var)
